@@ -561,7 +561,7 @@ VirtualInputManager:SendMouseButtonEvent(0, 0, 0, false, game, 1)
 end
 end
 
--- Função de spam de ataques quando detectar player
+-- Função de spam de ataques e block quando detectar player
 local function spamAtaques()
 if autoFollowAtivo and targetPlayer then
 local player = Players.LocalPlayer
@@ -578,12 +578,34 @@ end
 end
 end
 
--- Loop de seguimento, spam de clicks, ataques, teleport, god mode, kill aura, auto kill aura e anti-hit
+-- Função de spam de block quando detectar player no auto follow
+local function spamBlockAutoFollow()
+if autoFollowAtivo and targetPlayer then
+local player = Players.LocalPlayer
+local char = player.Character
+if char and char:FindFirstChild("HumanoidRootPart") and targetPlayer.Character and targetPlayer.Character:FindFirstChild("HumanoidRootPart") then
+local dist = (char.HumanoidRootPart.Position - targetPlayer.Character.HumanoidRootPart.Position).Magnitude
+if dist <= distanciaDetector then
+-- Spam do block event
+local evento = game:GetService("ReplicatedStorage").MainEvents.BLOCKEVENT
+local argsTrue = {[1] = true}
+local argsFalse = {[1] = false}
+
+evento:FireServer(unpack(argsTrue))  
+task.wait(0.001)
+evento:FireServer(unpack(argsFalse))
+end
+end
+end
+end
+
+-- Loop de seguimento, spam de clicks, ataques, block, teleport, god mode, kill aura, auto kill aura e anti-hit
 RunService.Heartbeat:Connect(function()
 if autoFollowAtivo then
 seguirPlayer()
 spamClicks()
 spamAtaques()
+spamBlockAutoFollow() -- Nova função para spam de block no auto follow
 end
 
 -- Verificar vida e controlar teleport
