@@ -800,77 +800,7 @@ monitorarJogadores() -- Inicializar monitoramento de jogadores para anti-hit
 iniciarDetector()
 detectorTogglePunch() -- Inicializar o
 
--- Variável de controle do toggle
-local PunchEnabled = false 
 
--- Toggle no Rayfield
-TabSp:CreateToggle({
-    Name = "Punch on Click",
-    CurrentValue = false,
-    Flag = "PunchOnClickToggle",
-    Callback = function(Value)
-        PunchEnabled = Value
-    end
-})
-
---================ SCRIPT =================--
-
-local player = game.Players.LocalPlayer
-local character = player.Character or player.CharacterAdded:Wait()
-local localroot = character:WaitForChild("HumanoidRootPart")
-local UserInputService = game:GetService("UserInputService")
-
--- Função para pegar o player mais próximo
-local function closest()
-    local range = 50
-    local target = nil
-    for _, v in pairs(game.Players:GetPlayers()) do
-        if v ~= player and v.Character and not v.Character:FindFirstChildWhichIsA("ForceField") then
-            local JN = v.Character:FindFirstChild("HumanoidRootPart")
-            local JNR = v.Character:FindFirstChildOfClass("Humanoid")
-            if JN and JNR and JNR.Health > 3 then
-                local dist = (localroot.Position - JN.Position).Magnitude
-                if dist < range then
-                    range = dist
-                    target = v.Character
-                end
-            end
-        end
-    end
-    return target
-end
-
--- Atualiza variáveis quando renascer
-player.CharacterAdded:Connect(function(char)
-    character = char
-    localroot = character:WaitForChild("HumanoidRootPart")
-end)
-
--- Função que executa o ataque 1 vez
-local function punchOnce()
-    if not PunchEnabled then return end
-    local target = closest()
-    if target and target:FindFirstChild("UpperTorso") then
-        local vroot = target:FindFirstChild("UpperTorso")
-        local args = {
-            [1] = 1,
-            [2] = target,
-            [3] = 50,
-            [4] = vroot
-        }
-        game:GetService("ReplicatedStorage").MainEvents.PUNCHEVENT:FireServer(unpack(args))
-    end
-end
-
--- Detecta clique (mouse ou toque)
-UserInputService.InputBegan:Connect(function(input, gameProcessed)
-    if PunchEnabled and not gameProcessed then
-        if input.UserInputType == Enum.UserInputType.MouseButton1 
-        or input.UserInputType == Enum.UserInputType.Touch then
-            punchOnce()
-        end
-    end
-end)
 
 local Tabv2 = Window:CreateTab("v2", 4483362458) -- Title, Image
 
