@@ -798,4 +798,93 @@ end
 monitorarRespawn()
 monitorarJogadores() -- Inicializar monitoramento de jogadores para anti-hit
 iniciarDetector()
-detectorTogglePunch() -- Inicializar o 
+detectorTogglePunch() -- Inicializar o
+
+local Tabv2 = Window:CreateTab("v2", 4483362458) -- Title, Image
+
+local Players = game:GetService("Players")
+local LocalPlayer = Players.LocalPlayer
+local RunService = game:GetService("RunService")
+
+local hitboxParts = {}
+local antiHitEnabled = false
+
+local function createHitboxForPlayer(player)
+    if player == LocalPlayer then return end
+    if not player.Character or not player.Character:FindFirstChild("HumanoidRootPart") then return end
+    
+    local part = Instance.new("Part")
+    part.Size = Vector3.new(10, 10, 10) -- tamanho do hitbox
+    part.Transparency = 1 -- invisível
+    part.Anchored = false
+    part.CanCollide = true
+    part.Massless = true
+    part.Parent = player.Character
+    part.CFrame = player.Character.HumanoidRootPart.CFrame
+    
+    local weld = Instance.new("WeldConstraint")
+    weld.Part0 = part
+    weld.Part1 = player.Character.HumanoidRootPart
+    weld.Parent = part
+    
+    hitboxParts[player] = part
+end
+
+local function removeHitboxForPlayer(player)
+    if hitboxParts[player] then
+        hitboxParts[player]:Destroy()
+        hitboxParts[player] = nil
+    end
+end
+
+local function updateHitboxes()
+    for _, player in pairs(Players:GetPlayers()) do
+        if player ~= LocalPlayer then
+            if LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("Humanoid") then
+                if LocalPlayer.Character.Humanoid.Health == 15 then
+                    if not hitboxParts[player] then
+                        createHitboxForPlayer(player)
+                    end
+                else
+                    removeHitboxForPlayer(player)
+                end
+            end
+        end
+    end
+end
+
+-- Atualizar quando players entrarem/sair
+Players.PlayerAdded:Connect(function(player)
+    if antiHitEnabled then
+        updateHitboxes()
+    end
+end)
+
+Players.PlayerRemoving:Connect(function(player)
+    removeHitboxForPlayer(player)
+end)
+
+-- Loop para verificar vida e atualizar hitbox
+RunService.Heartbeat:Connect(function()
+    if antiHitEnabled then
+        updateHitboxes()
+    end
+end)
+
+-- Toggle Rayfield
+local Toggle = Tabv2:CreateToggle({
+    Name = "Anti Hit (vida = 15)",
+    CurrentValue = false,
+    Flag = "AntiHitToggle",
+    Callback = function(Value)
+        antiHitEnabled = Value
+        if not Value then
+            for _, part in pairs(hitboxParts) do
+                part:Destroy()
+            end
+            hitboxParts = {}
+        else
+            updateHitboxes()
+        end
+    end,
+})
