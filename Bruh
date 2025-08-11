@@ -2,9 +2,9 @@
 local Rayfield = loadstring(game:HttpGet('https://sirius.menu/rayfield'))()
 
 local Window = Rayfield:CreateWindow({
-Name = "Player Detector Spam",
+Name = "Player "school thugs - by darker",
 LoadingTitle = "Loading...",
-LoadingSubtitle = "by elison",
+LoadingSubtitle = "by darker9899",
 ConfigurationSaving = {
 Enabled = true,
 FolderName = nil,
@@ -103,10 +103,10 @@ botaoFlutuante.MouseButton1Click:Connect(function()
 if not dragging then
 autoFollowAtivo = not autoFollowAtivo
 if autoFollowAtivo then
-botaoFlutuante.Text = "Follow: ON"
+botaoFlutuante.Text = "auto fight: ON"
 botaoFlutuante.BackgroundColor3 = Color3.fromRGB(85, 255, 85)
 else
-botaoFlutuante.Text = "Follow: OFF"
+botaoFlutuante.Text = "auto fight: OFF"
 botaoFlutuante.BackgroundColor3 = Color3.fromRGB(255, 85, 85)
 targetPlayer = nil
 end
@@ -663,7 +663,7 @@ end
 local Tab = Window:CreateTab("Detector", 4483362458)
 
 Tab:CreateToggle({
-Name = "Auto Anti-Hit (Vida ≤ 15)",
+Name = "Auto Anti-Hit (so you have life at 15)",
 CurrentValue = false,
 Flag = "ToggleAutoAntiHit",
 Callback = function(Value)
@@ -687,7 +687,7 @@ end
 })
 
 Tab:CreateToggle({
-Name = "God Mode (Anti-Dano)",
+Name = "God Mode (anti-damage)",
 CurrentValue = false,
 Flag = "ToggleGodMode",
 Callback = function(Value)
@@ -709,7 +709,7 @@ end
 })
 
 Tab:CreateToggle({
-Name = "Ativar Detector e Spam",
+Name = "auto block",
 CurrentValue = false,
 Flag = "ToggleSpam",
 Callback = function(Value)
@@ -718,7 +718,7 @@ end
 })
 
 Tab:CreateToggle({
-Name = "Mostrar Botão Auto Follow",
+Name = "auto fight toggle",
 CurrentValue = false,
 Flag = "ToggleBotaoFollow",
 Callback = function(Value)
@@ -734,7 +734,7 @@ end
 })
 
 Tab:CreateToggle({
-Name = "Auto Teleport (Vida Baixa)",
+Name = "Auto Teleport (if you have low health)",
 CurrentValue = false,
 Flag = "ToggleAutoTeleport",
 Callback = function(Value)
@@ -759,7 +759,7 @@ end
 })
 
 Tab:CreateSlider({
-Name = "Distância do Detector",
+Name = "auto hit detector",
 Range = {5, 50},
 Increment = 1,
 Suffix = " studs",
@@ -771,7 +771,7 @@ end
 })
 
 Tab:CreateSlider({
-Name = "Velocidade do Spam",
+Name = "auto block speed",
 Range = {1, 9999999999999999999},
 Increment = 1,
 Suffix = "%",
@@ -783,7 +783,7 @@ end
 })
 
 Tab:CreateSlider({
-Name = "Distância Toggle Detector (Punch)",
+Name = "Distance Toggle Detector (Punch",
 Range = {5, 25},
 Increment = 1,
 Suffix = " studs",
