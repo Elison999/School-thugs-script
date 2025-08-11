@@ -2,9 +2,9 @@
 local Rayfield = loadstring(game:HttpGet('https://sirius.menu/rayfield'))()
 
 local Window = Rayfield:CreateWindow({
-Name = "School thugs - by darker",
+Name = "Player Detector Spam",
 LoadingTitle = "Loading...",
-LoadingSubtitle = "by darker9899",
+LoadingSubtitle = "by elison",
 ConfigurationSaving = {
 Enabled = true,
 FolderName = nil,
@@ -126,7 +126,7 @@ if not character or not character:FindFirstChild("HumanoidRootPart") then return
 -- Criar a barreira invisível
 antiHitBarrier = Instance.new("Part")
 antiHitBarrier.Name = "AntiHitBarrier"
-antiHitBarrier.Size = Vector3.new(2, 2, 2)
+antiHitBarrier.Size = Vector3.new(20, 20, 20)
 antiHitBarrier.Material = Enum.Material.ForceField
 antiHitBarrier.Color = Color3.fromRGB(255, 0, 0)
 antiHitBarrier.Transparency = 1
@@ -367,6 +367,24 @@ end
 vidaAnterior = vidaAtual
 end
 
+-- Função para verificar se o atacante está deitado/ragdoll
+local function atacanteEstaDeitado()
+if not atacantePlayer or not atacantePlayer.Character then return false end
+
+local atacanteCharacter = atacantePlayer.Character
+local humanoid = atacanteCharacter:FindFirstChildOfClass("Humanoid")
+if not humanoid then return false end
+
+-- Verifica se está em estado de ragdoll ou deitado
+local stateType = humanoid:GetState()
+return stateType == Enum.HumanoidStateType.Ragdoll or 
+       stateType == Enum.HumanoidStateType.FallingDown or
+       stateType == Enum.HumanoidStateType.Flying or
+       stateType == Enum.HumanoidStateType.Freefall or
+       humanoid.PlatformStand == true or
+       humanoid.Sit == true
+end
+
 -- Função para teleportar atrás do atacante
 local function teleportarAtrasDoAtacante()
 if not teleportandoAtacante or not atacantePlayer then return end
@@ -380,6 +398,11 @@ if not atacanteCharacter or not atacanteCharacter:FindFirstChild("HumanoidRootPa
 -- Se o atacante não existe mais, parar de teleportar
 teleportandoAtacante = false
 atacantePlayer = nil
+return
+end
+
+-- Se o atacante está deitado/ragdoll, não teleportar
+if atacanteEstaDeitado() then
 return
 end
 
@@ -753,4 +776,4 @@ end
 monitorarRespawn()
 monitorarJogadores() -- Inicializar monitoramento de jogadores para anti-hit
 iniciarDetector()
-detectorTogglePunch() -- Inicializar o
+detectorTogglePunch() -- Inicializar o 
