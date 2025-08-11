@@ -2,9 +2,9 @@
 local Rayfield = loadstring(game:HttpGet('https://sirius.menu/rayfield'))()
 
 local Window = Rayfield:CreateWindow({
-Name = "Player Detector Spam",
+Name = "school thugs - brig hub - by darker9899",
 LoadingTitle = "Loading...",
-LoadingSubtitle = "by elison",
+LoadingSubtitle = "by daker9899",
 ConfigurationSaving = {
 Enabled = true,
 FolderName = nil,
@@ -103,10 +103,10 @@ botaoFlutuante.MouseButton1Click:Connect(function()
 if not dragging then
 autoFollowAtivo = not autoFollowAtivo
 if autoFollowAtivo then
-botaoFlutuante.Text = "Follow: ON"
+botaoFlutuante.Text = "auto fight: ON"
 botaoFlutuante.BackgroundColor3 = Color3.fromRGB(85, 255, 85)
 else
-botaoFlutuante.Text = "Follow: OFF"
+botaoFlutuante.Text = "auto fight: OFF"
 botaoFlutuante.BackgroundColor3 = Color3.fromRGB(255, 85, 85)
 targetPlayer = nil
 end
