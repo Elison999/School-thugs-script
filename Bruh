@@ -1,0 +1,756 @@
+-- Rayfield Library
+local Rayfield = loadstring(game:HttpGet('https://sirius.menu/rayfield'))()
+
+local Window = Rayfield:CreateWindow({
+Name = "School thugs - by darker",
+LoadingTitle = "Loading...",
+LoadingSubtitle = "by darker9899",
+ConfigurationSaving = {
+Enabled = true,
+FolderName = nil,
+FileName = "DetectorSpamConfig"
+},
+Discord = {
+Enabled = false
+},
+KeySystem = false
+})
+
+-- Variáveis
+local spamAtivo = false
+local distanciaDetector = 13
+local spamVelocidade = 50 -- porcentagem
+local autoFollowAtivo = false
+local botaoFlutuanteVisivel = false
+local targetPlayer = nil
+local distanciaToggleDetector = 10 -- Nova variável para distância do detector do toggle
+local autoTeleportAtivo = false -- Toggle para auto teleport quando vida baixa
+local teleportTargetPlayer = nil -- Player alvo para teleport
+local estaTeleportando = false -- Estado atual do teleport
+local godModeAtivo = false -- Toggle para god mode
+local atacantePlayer = nil -- Player que deu dano
+local teleportandoAtacante = false -- Estado se está teleportando para o atacante
+local vidaAnterior = 100 -- Para detectar quando recebe dano
+local killAuraAtivo = false -- Toggle para kill aura
+local killAuraRange = 50 -- Alcance do kill aura
+local killAuraTarget = nil -- Alvo atual do kill aura
+local autoKillAuraAtivo = false -- Toggle para auto kill aura quando vida baixa
+local killAuraAtivadoAuto = false -- Estado se o kill aura foi ativado automaticamente
+
+-- Variáveis do Auto Anti-Hit
+local autoAntiHitAtivo = false -- Toggle para auto anti-hit
+local antiHitBarrier = nil -- Referência para a barreira
+local antiHitAtivado = false -- Estado se a barreira está ativa
+
+-- Services
+local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
+local UserInputService = game:GetService("UserInputService")
+local VirtualInputManager = game:GetService("VirtualInputManager")
+
+-- GUI do botão flutuante
+local screenGui = Instance.new("ScreenGui")
+screenGui.Name = "AutoFollowGUI"
+screenGui.ResetOnSpawn = false -- Impede que suma quando morrer
+screenGui.Parent = game.Players.LocalPlayer:WaitForChild("PlayerGui")
+
+local botaoFlutuante = Instance.new("TextButton")
+botaoFlutuante.Name = "AutoFollowButton"
+botaoFlutuante.Size = UDim2.new(0, 120, 0, 50)
+botaoFlutuante.Position = UDim2.new(0, 50, 0, 200)
+botaoFlutuante.BackgroundColor3 = Color3.fromRGB(255, 85, 85)
+botaoFlutuante.Text = "Follow: OFF"
+botaoFlutuante.TextColor3 = Color3.fromRGB(255, 255, 255)
+botaoFlutuante.TextScaled = true
+botaoFlutuante.Font = Enum.Font.SourceSansBold
+botaoFlutuante.BorderSizePixel = 0
+botaoFlutuante.Visible = false
+botaoFlutuante.Parent = screenGui
+
+-- Corner arredondado
+local corner = Instance.new("UICorner")
+corner.CornerRadius = UDim.new(0, 10)
+corner.Parent = botaoFlutuante
+
+-- Sistema de arrastar
+local dragging = false
+local dragStart = nil
+local startPos = nil
+
+botaoFlutuante.InputBegan:Connect(function(input)
+if input.UserInputType == Enum.UserInputType.MouseButton1 then
+dragging = true
+dragStart = input.Position
+startPos = botaoFlutuante.Position
+end
+end)
+
+UserInputService.InputChanged:Connect(function(input)
+if dragging and input.UserInputType == Enum.UserInputType.MouseMovement then
+local delta = input.Position - dragStart
+botaoFlutuante.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
+end
+end)
+
+UserInputService.InputEnded:Connect(function(input)
+if input.UserInputType == Enum.UserInputType.MouseButton1 then
+dragging = false
+end
+end)
+
+-- Toggle do botão flutuante
+botaoFlutuante.MouseButton1Click:Connect(function()
+if not dragging then
+autoFollowAtivo = not autoFollowAtivo
+if autoFollowAtivo then
+botaoFlutuante.Text = "Follow: ON"
+botaoFlutuante.BackgroundColor3 = Color3.fromRGB(85, 255, 85)
+else
+botaoFlutuante.Text = "Follow: OFF"
+botaoFlutuante.BackgroundColor3 = Color3.fromRGB(255, 85, 85)
+targetPlayer = nil
+end
+end
+end)
+
+-- Função para criar a barreira anti-hit
+local function criarBarreiraAntiHit()
+if antiHitBarrier then
+antiHitBarrier:Destroy()
+end
+
+local player = game.Players.LocalPlayer
+local character = player.Character
+if not character or not character:FindFirstChild("HumanoidRootPart") then return end
+
+-- Criar a barreira invisível
+antiHitBarrier = Instance.new("Part")
+antiHitBarrier.Name = "AntiHitBarrier"
+antiHitBarrier.Size = Vector3.new(20, 20, 20)
+antiHitBarrier.Material = Enum.Material.ForceField
+antiHitBarrier.Color = Color3.fromRGB(255, 0, 0)
+antiHitBarrier.Transparency = 1
+antiHitBarrier.CanCollide = true
+antiHitBarrier.Anchored = true
+antiHitBarrier.Parent = workspace
+
+-- Posicionar a barreira no jogador
+local rootPart = character.HumanoidRootPart
+antiHitBarrier.CFrame = rootPart.CFrame
+end
+
+-- Função para remover a barreira anti-hit
+local function removerBarreiraAntiHit()
+if antiHitBarrier then
+antiHitBarrier:Destroy()
+antiHitBarrier = nil
+end
+antiHitAtivado = false
+end
+
+-- Função para verificar vida e controlar anti-hit
+local function verificarVidaEAntiHit()
+if not autoAntiHitAtivo then return end
+
+local player = game.Players.LocalPlayer
+local character = player.Character
+if not character then return end
+
+local humanoid = character:FindFirstChild("Humanoid")
+if not humanoid then return end
+
+local vidaAtual = humanoid.Health
+
+-- Se vida <= 15 e anti-hit não está ativo, criar barreira
+if vidaAtual <= 15 and not antiHitAtivado then
+criarBarreiraAntiHit()
+antiHitAtivado = true
+end
+
+-- Se vida > 15 e anti-hit está ativo, remover barreira
+if vidaAtual > 15 and antiHitAtivado then
+removerBarreiraAntiHit()
+end
+end
+
+-- Função para atualizar posição da barreira
+local function atualizarPosicaoBarreira()
+if not antiHitBarrier or not antiHitAtivado then return end
+
+local player = game.Players.LocalPlayer
+local character = player.Character
+if not character or not character:FindFirstChild("HumanoidRootPart") then return end
+
+-- Atualizar posição da barreira para seguir o jogador
+antiHitBarrier.CFrame = character.HumanoidRootPart.CFrame
+end
+
+-- Função para recriar barreiras quando jogadores morrem/renascem
+local function monitorarJogadores()
+-- Conectar eventos de morte/renascimento para todos os jogadores
+for _, player in ipairs(game.Players:GetPlayers()) do
+if player ~= game.Players.LocalPlayer then
+player.CharacterAdded:Connect(function()
+if autoAntiHitAtivo and antiHitAtivado then
+-- Recriar a barreira quando qualquer jogador renascer
+task.wait(1)
+if antiHitAtivado then
+criarBarreiraAntiHit()
+end
+end
+end)
+end
+end
+
+-- Monitorar novos jogadores que entram
+game.Players.PlayerAdded:Connect(function(player)
+player.CharacterAdded:Connect(function()
+if autoAntiHitAtivo and antiHitAtivado then
+task.wait(1)
+if antiHitAtivado then
+criarBarreiraAntiHit()
+end
+end
+end)
+end)
+end
+
+-- Função de spam com delay entre códigos
+local function enviarSpam()
+local evento = game:GetService("ReplicatedStorage").MainEvents.BLOCKEVENT
+local argsTrue = {[1] = true}
+local argsFalse = {[1] = false}
+
+evento:FireServer(unpack(argsTrue))  
+task.wait(math.clamp((1 - (spamVelocidade / 5000000)) / 1, 0.001, 0.001)) -- delay entre códigos  
+evento:FireServer(unpack(argsFalse))
+
+end
+
+-- Nova função para o PUNCHEVENT
+local function enviarPunch()
+local player = game.Players.LocalPlayer
+local character = player.Character
+if character and character:FindFirstChild("UpperTorso") then
+local args = {
+[1] = 1,
+[2] = character,
+[3] = 50,
+[4] = character.UpperTorso
+}
+game:GetService("ReplicatedStorage").MainEvents.PUNCHEVENT:FireServer(unpack(args))
+end
+end
+
+-- Função de seguimento automático
+local function seguirPlayer()
+if not autoFollowAtivo or not targetPlayer or not targetPlayer.Character then
+return
+end
+
+local player = Players.LocalPlayer  
+local character = player.Character  
+  
+if character and character:FindFirstChild("HumanoidRootPart") and character:FindFirstChild("Humanoid") then  
+    local targetCharacter = targetPlayer.Character  
+    if targetCharacter and targetCharacter:FindFirstChild("HumanoidRootPart") then  
+        local humanoid = character.Humanoid  
+        local targetPosition = targetCharacter.HumanoidRootPart.Position  
+        humanoid:MoveTo(targetPosition)  
+          
+        -- Fazer o personagem pular (só se estiver no chão)  
+        if humanoid.FloorMaterial ~= Enum.Material.Air then  
+            humanoid.Jump = true  
+        end  
+    end  
+end
+
+end
+
+-- Função principal
+local function iniciarDetector()
+task.spawn(function()
+while task.wait() do
+if spamAtivo then
+local player = game.Players.LocalPlayer
+local char = player.Character
+if char and char:FindFirstChild("HumanoidRootPart") then
+for _, otherPlayer in ipairs(game.Players:GetPlayers()) do
+if otherPlayer ~= player and otherPlayer.Character and otherPlayer.Character:FindFirstChild("HumanoidRootPart") then
+local dist = (char.HumanoidRootPart.Position - otherPlayer.Character.HumanoidRootPart.Position).Magnitude
+if dist <= distanciaDetector then
+-- Define o target para seguimento se o auto follow estiver ativo
+if autoFollowAtivo and not targetPlayer then
+targetPlayer = otherPlayer
+end
+enviarSpam()
+task.wait(math.clamp((1 - (spamVelocidade / 9999999999999999999)), 0.001, 1))
+end
+end
+end
+end
+end
+end
+end)
+end
+
+-- Função para verificar vida e controlar teleport
+local function verificarVidaETeleport()
+local player = game.Players.LocalPlayer
+local character = player.Character
+if not autoTeleportAtivo or not character then return end
+
+local humanoid = character:FindFirstChild("Humanoid")
+if not humanoid then return end
+
+local vidaAtual = humanoid.Health
+
+-- Se vida <= 10 e não está teleportando, começar a teleportar
+if vidaAtual <= 10 and not estaTeleportando then
+estaTeleportando = true
+-- Encontrar um player alvo se não tiver um
+if not teleportTargetPlayer then
+for _, otherPlayer in ipairs(game.Players:GetPlayers()) do
+if otherPlayer ~= player and otherPlayer.Character and otherPlayer.Character:FindFirstChild("HumanoidRootPart") then
+teleportTargetPlayer = otherPlayer
+break
+end
+end
+end
+end
+
+-- Se vida >= 20 e está teleportando, parar de teleportar
+if vidaAtual >= 20 and estaTeleportando then
+estaTeleportando = false
+teleportTargetPlayer = nil
+end
+end
+
+-- Função para detectar dano e encontrar atacante
+local function detectarDanoEAtacante()
+if not godModeAtivo then return end
+
+local player = game.Players.LocalPlayer
+local character = player.Character
+if not character then return end
+
+local humanoid = character:FindFirstChild("Humanoid")
+if not humanoid then return end
+
+local vidaAtual = humanoid.Health
+
+-- Se recebeu dano (vida diminuiu)
+if vidaAtual < vidaAnterior and vidaAtual > 0 then
+-- Procurar player mais próximo dentro de 13 studs (provável atacante)
+local playerMaisProximo = nil
+local menorDistancia = 13
+
+if character:FindFirstChild("HumanoidRootPart") then
+for _, otherPlayer in ipairs(game.Players:GetPlayers()) do
+if otherPlayer ~= player and otherPlayer.Character and otherPlayer.Character:FindFirstChild("HumanoidRootPart") then
+local dist = (character.HumanoidRootPart.Position - otherPlayer.Character.HumanoidRootPart.Position).Magnitude
+if dist <= menorDistancia then
+menorDistancia = dist
+playerMaisProximo = otherPlayer
+end
+end
+end
+
+-- Se encontrou um atacante, começar a teleportar
+if playerMaisProximo then
+atacantePlayer = playerMaisProximo
+teleportandoAtacante = true
+end
+end
+end
+
+vidaAnterior = vidaAtual
+end
+
+-- Função para teleportar atrás do atacante
+local function teleportarAtrasDoAtacante()
+if not teleportandoAtacante or not atacantePlayer then return end
+
+local player = game.Players.LocalPlayer
+local character = player.Character
+if not character or not character:FindFirstChild("HumanoidRootPart") then return end
+
+local atacanteCharacter = atacantePlayer.Character
+if not atacanteCharacter or not atacanteCharacter:FindFirstChild("HumanoidRootPart") then
+-- Se o atacante não existe mais, parar de teleportar
+teleportandoAtacante = false
+atacantePlayer = nil
+return
+end
+
+-- Calcular posição atrás do atacante (distância 2)
+local atacanteRoot = atacanteCharacter.HumanoidRootPart
+local atacantePosition = atacanteRoot.Position
+local atacanteLookVector = atacanteRoot.CFrame.LookVector
+local posicaoAtras = atacantePosition - (atacanteLookVector * 2)
+
+-- Teleportar
+character.HumanoidRootPart.CFrame = CFrame.new(posicaoAtras, atacantePosition)
+end
+
+-- Função para encontrar o alvo mais próximo para Kill Aura
+local function encontrarAlvoKillAura()
+if not killAuraAtivo then return nil end
+
+local player = game.Players.LocalPlayer
+local character = player.Character
+if not character or not character:FindFirstChild("HumanoidRootPart") then return nil end
+
+local localroot = character.HumanoidRootPart
+local range = killAuraRange
+local target = nil
+
+for _, v in pairs(game.Players:GetPlayers()) do
+if v ~= player and v.Character and not v.Character:FindFirstChildWhichIsA("ForceField") then
+local JN = v.Character:FindFirstChild("HumanoidRootPart")
+local JNR = v.Character:FindFirstChildOfClass("Humanoid")
+if JN and JNR and JNR.Health > 3 then
+local dist = (localroot.Position - JN.Position).magnitude
+if dist < range then
+range = dist
+target = v.Character
+end
+end
+end
+end
+
+return target
+end
+
+-- Função para verificar vida e controlar auto kill aura
+local function verificarVidaEAutoKillAura()
+if not autoKillAuraAtivo then return end
+
+local player = game.Players.LocalPlayer
+local character = player.Character
+if not character then return end
+
+local humanoid = character:FindFirstChild("Humanoid")
+if not humanoid then return end
+
+local vidaAtual = humanoid.Health
+
+-- Se vida <= 40 e kill aura não está ativo, ativar automaticamente
+if vidaAtual <= 40 and not killAuraAtivo then
+killAuraAtivo = true
+killAuraAtivadoAuto = true
+end
+
+-- Se vida > 40 e kill aura foi ativado automaticamente, desativar
+if vidaAtual > 40 and killAuraAtivadoAuto then
+killAuraAtivo = false
+killAuraAtivadoAuto = false
+killAuraTarget = nil
+end
+end
+local function executarKillAura()
+if not killAuraAtivo then return end
+
+killAuraTarget = encontrarAlvoKillAura()
+
+if killAuraTarget and killAuraTarget:FindFirstChild("UpperTorso") then
+local vroot = killAuraTarget:FindFirstChild("UpperTorso")
+local args = {
+[1] = 1,
+[2] = killAuraTarget,
+[3] = 50,
+[4] = vroot
+}
+
+game:GetService("ReplicatedStorage").MainEvents.PUNCHEVENT:FireServer(unpack(args))
+end
+end
+local function resetarGodMode()
+atacantePlayer = nil
+teleportandoAtacante = false
+local player = game.Players.LocalPlayer
+local character = player.Character
+if character then
+local humanoid = character:FindFirstChild("Humanoid")
+if humanoid then
+vidaAnterior = humanoid.Health
+end
+end
+end
+local function teleportarAtrasDoPlayer()
+if not estaTeleportando or not teleportTargetPlayer then return end
+
+local player = game.Players.LocalPlayer
+local character = player.Character
+if not character or not character:FindFirstChild("HumanoidRootPart") then return end
+
+local targetCharacter = teleportTargetPlayer.Character
+if not targetCharacter or not targetCharacter:FindFirstChild("HumanoidRootPart") then
+-- Se o target não existe mais, procurar outro
+teleportTargetPlayer = nil
+for _, otherPlayer in ipairs(game.Players:GetPlayers()) do
+if otherPlayer ~= player and otherPlayer.Character and otherPlayer.Character:FindFirstChild("HumanoidRootPart") then
+teleportTargetPlayer = otherPlayer
+targetCharacter = otherPlayer.Character
+break
+end
+end
+if not targetCharacter then return end
+end
+
+-- Calcular posição atrás do target (distância 13)
+local targetRoot = targetCharacter.HumanoidRootPart
+local targetPosition = targetRoot.Position
+local targetLookVector = targetRoot.CFrame.LookVector
+local posicaoAtras = targetPosition - (targetLookVector * 13)
+
+-- Teleportar
+character.HumanoidRootPart.CFrame = CFrame.new(posicaoAtras, targetPosition)
+end
+local function detectorTogglePunch()
+task.spawn(function()
+while task.wait() do
+if autoFollowAtivo then
+local player = game.Players.LocalPlayer
+local char = player.Character
+if char and char:FindFirstChild("HumanoidRootPart") then
+for _, otherPlayer in ipairs(game.Players:GetPlayers()) do
+if otherPlayer ~= player and otherPlayer.Character and otherPlayer.Character:FindFirstChild("HumanoidRootPart") then
+local dist = (char.HumanoidRootPart.Position - otherPlayer.Character.HumanoidRootPart.Position).Magnitude
+if dist <= distanciaToggleDetector then
+enviarPunch()
+task.wait(0.1) -- Pequeno delay entre punches
+end
+end
+end
+end
+end
+end
+end)
+end
+
+-- Função de spam de clicks e ataques
+local function spamClicks()
+if autoFollowAtivo then
+VirtualInputManager:SendMouseButtonEvent(0, 0, 0, true, game, 1)
+task.wait(0.0001)
+VirtualInputManager:SendMouseButtonEvent(0, 0, 0, false, game, 1)
+end
+end
+
+-- Função de spam de ataques quando detectar player
+local function spamAtaques()
+if autoFollowAtivo and targetPlayer then
+local player = Players.LocalPlayer
+local char = player.Character
+if char and char:FindFirstChild("HumanoidRootPart") and targetPlayer.Character and targetPlayer.Character:FindFirstChild("HumanoidRootPart") then
+local dist = (char.HumanoidRootPart.Position - targetPlayer.Character.HumanoidRootPart.Position).Magnitude
+if dist <= distanciaDetector then
+-- Lançar os dois ataques
+game:GetService("ReplicatedStorage").MainEvents.SUPLEXEVENT:FireServer()
+task.wait(0.1)
+game:GetService("ReplicatedStorage").MainEvents.HEAVYHIT:FireServer()
+end
+end
+end
+end
+
+-- Loop de seguimento, spam de clicks, ataques, teleport, god mode, kill aura, auto kill aura e anti-hit
+RunService.Heartbeat:Connect(function()
+if autoFollowAtivo then
+seguirPlayer()
+spamClicks()
+spamAtaques()
+end
+
+-- Verificar vida e controlar teleport
+if autoTeleportAtivo then
+verificarVidaETeleport()
+if estaTeleportando then
+teleportarAtrasDoPlayer()
+end
+end
+
+-- God Mode: detectar dano e teleportar
+if godModeAtivo then
+detectarDanoEAtacante()
+if teleportandoAtacante then
+teleportarAtrasDoAtacante()
+end
+end
+
+-- Auto Kill Aura por vida
+if autoKillAuraAtivo then
+verificarVidaEAutoKillAura()
+end
+
+-- Kill Aura
+if killAuraAtivo then
+executarKillAura()
+end
+
+-- Auto Anti-Hit
+if autoAntiHitAtivo then
+verificarVidaEAntiHit()
+atualizarPosicaoBarreira()
+end
+end)
+
+-- Sempre reinicia quando morrer
+local function monitorarRespawn()
+local player = game.Players.LocalPlayer
+player.CharacterAdded:Connect(function()
+task.wait(1)
+iniciarDetector()
+detectorTogglePunch() -- Inicializar o novo detector
+targetPlayer = nil -- Reset target quando respawnar
+teleportTargetPlayer = nil -- Reset teleport target quando respawnar
+estaTeleportando = false -- Reset estado do teleport
+resetarGodMode() -- Reset god mode quando respawnar
+killAuraTarget = nil -- Reset kill aura target quando respawnar
+killAuraAtivadoAuto = false -- Reset auto kill aura quando respawnar
+-- Reset anti-hit quando respawnar
+removerBarreiraAntiHit()
+end)
+end
+
+-- Aba do Rayfield
+local Tab = Window:CreateTab("Detector", 4483362458)
+
+Tab:CreateToggle({
+Name = "Auto Anti-Hit (Vida ≤ 15)",
+CurrentValue = false,
+Flag = "ToggleAutoAntiHit",
+Callback = function(Value)
+autoAntiHitAtivo = Value
+if not Value then
+removerBarreiraAntiHit()
+end
+end
+})
+
+Tab:CreateToggle({
+Name = "Kill Aura",
+CurrentValue = false,
+Flag = "ToggleKillAura",
+Callback = function(Value)
+killAuraAtivo = Value
+if not Value then
+killAuraTarget = nil
+end
+end
+})
+
+Tab:CreateToggle({
+Name = "God Mode (Anti-Dano)",
+CurrentValue = false,
+Flag = "ToggleGodMode",
+Callback = function(Value)
+godModeAtivo = Value
+if not Value then
+resetarGodMode()
+else
+-- Inicializar vida anterior quando ativar
+local player = game.Players.LocalPlayer
+local character = player.Character
+if character then
+local humanoid = character:FindFirstChild("Humanoid")
+if humanoid then
+vidaAnterior = humanoid.Health
+end
+end
+end
+end
+})
+
+Tab:CreateToggle({
+Name = "Ativar Detector e Spam",
+CurrentValue = false,
+Flag = "ToggleSpam",
+Callback = function(Value)
+spamAtivo = Value
+end
+})
+
+Tab:CreateToggle({
+Name = "Mostrar Botão Auto Follow",
+CurrentValue = false,
+Flag = "ToggleBotaoFollow",
+Callback = function(Value)
+botaoFlutuanteVisivel = Value
+botaoFlutuante.Visible = Value
+if not Value then
+autoFollowAtivo = false
+targetPlayer = nil
+botaoFlutuante.Text = "Follow: OFF"
+botaoFlutuante.BackgroundColor3 = Color3.fromRGB(255, 85, 85)
+end
+end
+})
+
+Tab:CreateToggle({
+Name = "Auto Teleport (Vida Baixa)",
+CurrentValue = false,
+Flag = "ToggleAutoTeleport",
+Callback = function(Value)
+autoTeleportAtivo = Value
+if not Value then
+estaTeleportando = false
+teleportTargetPlayer = nil
+end
+end
+})
+
+Tab:CreateSlider({
+Name = "Kill Aura Range",
+Range = {10, 100},
+Increment = 5,
+Suffix = " studs",
+CurrentValue = 50,
+Flag = "KillAuraRange",
+Callback = function(Value)
+killAuraRange = Value
+end
+})
+
+Tab:CreateSlider({
+Name = "Distância do Detector",
+Range = {5, 50},
+Increment = 1,
+Suffix = " studs",
+CurrentValue = 13,
+Flag = "DistanciaDetector",
+Callback = function(Value)
+distanciaDetector = Value
+end
+})
+
+Tab:CreateSlider({
+Name = "Velocidade do Spam",
+Range = {1, 9999999999999999999},
+Increment = 1,
+Suffix = "%",
+CurrentValue = 50,
+Flag = "VelocidadeSpam",
+Callback = function(Value)
+spamVelocidade = Value
+end
+})
+
+Tab:CreateSlider({
+Name = "Distância Toggle Detector (Punch)",
+Range = {5, 25},
+Increment = 1,
+Suffix = " studs",
+CurrentValue = 10,
+Flag = "DistanciaToggleDetector",
+Callback = function(Value)
+distanciaToggleDetector = Value
+end
+})
+
+-- Inicialização
+monitorarRespawn()
+monitorarJogadores() -- Inicializar monitoramento de jogadores para anti-hit
+iniciarDetector()
+detectorTogglePunch() -- Inicializar o
