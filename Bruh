@@ -1,4 +1,4 @@
--- Rayfield Library
+xh-- Rayfield Library
 local Rayfield = loadstring(game:HttpGet('https://sirius.menu/rayfield'))()
 
 local Window = Rayfield:CreateWindow({
@@ -410,7 +410,7 @@ end
 local atacanteRoot = atacanteCharacter.HumanoidRootPart
 local atacantePosition = atacanteRoot.Position
 local atacanteLookVector = atacanteRoot.CFrame.LookVector
-local posicaoAtras = atacantePosition - (atacanteLookVector * 2)
+local posicaoAtras = atacantePosition - (atacanteLookVector * 3)
 
 -- Teleportar
 character.HumanoidRootPart.CFrame = CFrame.new(posicaoAtras, atacantePosition)
@@ -556,7 +556,7 @@ end
 local function spamClicks()
 if autoFollowAtivo then
 VirtualInputManager:SendMouseButtonEvent(0, 0, 0, true, game, 1)
-task.wait(0.0001)
+task.wait(0.01)
 VirtualInputManager:SendMouseButtonEvent(0, 0, 0, false, game, 1)
 end
 end
@@ -592,7 +592,7 @@ local argsTrue = {[1] = true}
 local argsFalse = {[1] = false}
 
 evento:FireServer(unpack(argsTrue))  
-task.wait(0.001)
+task.wait(0.1)
 evento:FireServer(unpack(argsFalse))
 end
 end
@@ -660,9 +660,9 @@ end)
 end
 
 -- Aba do Rayfield
-local Tab = Window:CreateTab("Combat👊", 4483362458)
+local TabSp = Window:CreateTab("Combat👊", 4483362458)
 
-Tab:CreateToggle({
+TabSp:CreateToggle({
 Name = "Auto Anti-Hit (heath ≤ 15)",
 CurrentValue = false,
 Flag = "ToggleAutoAntiHit",
@@ -674,7 +674,7 @@ end
 end
 })
 
-Tab:CreateToggle({
+TabSp:CreateToggle({
 Name = "Kill Aura",
 CurrentValue = false,
 Flag = "ToggleKillAura",
@@ -686,7 +686,7 @@ end
 end
 })
 
-Tab:CreateToggle({
+TabSp:CreateToggle({
 Name = "God Mode (anti-damage)",
 CurrentValue = false,
 Flag = "ToggleGodMode",
@@ -708,7 +708,7 @@ end
 end
 })
 
-Tab:CreateToggle({
+TabSp:CreateToggle({
 Name = "auto block",
 CurrentValue = false,
 Flag = "ToggleSpam",
@@ -717,7 +717,7 @@ spamAtivo = Value
 end
 })
 
-Tab:CreateToggle({
+TabSp:CreateToggle({
 Name = "Show toggle auto fight",
 CurrentValue = false,
 Flag = "ToggleBotaoFollow",
@@ -733,7 +733,7 @@ end
 end
 })
 
-Tab:CreateToggle({
+TabSp:CreateToggle({
 Name = "Auto Teleport (Low Life)",
 CurrentValue = false,
 Flag = "ToggleAutoTeleport",
@@ -746,7 +746,7 @@ end
 end
 })
 
-Tab:CreateSlider({
+TabSp:CreateSlider({
 Name = "Kill Aura Range",
 Range = {10, 100},
 Increment = 5,
@@ -758,7 +758,7 @@ killAuraRange = Value
 end
 })
 
-Tab:CreateSlider({
+TabSp:CreateSlider({
 Name = "auto fight distance",
 Range = {5, 50},
 Increment = 1,
@@ -770,7 +770,7 @@ distanciaDetector = Value
 end
 })
 
-Tab:CreateSlider({
+TabSp:CreateSlider({
 Name = "speed auto block",
 Range = {1, 9999999999999999999},
 Increment = 1,
@@ -782,7 +782,7 @@ spamVelocidade = Value
 end
 })
 
-Tab:CreateSlider({
+TabSp:CreateSlider({
 Name = "Distance Toggle Detector (Punch)",
 Range = {5, 25},
 Increment = 1,
@@ -961,7 +961,7 @@ end
 
 -- Toggle principal do spam
 local SpamToggle = Tab:CreateToggle({
-   Name = "Ativar Spam Block",
+   Name = "auto spam block",
    CurrentValue = false,
    Flag = "SpamToggle",
    Callback = function(Value)
@@ -980,7 +980,7 @@ local SpamToggle = Tab:CreateToggle({
 
 -- Toggle do detector de distância
 local DistanceToggle = Tab:CreateToggle({
-   Name = "Detector de Distância (13 studs)",
+   Name = "spam multiple",
    CurrentValue = false,
    Flag = "DistanceToggle",
    Callback = function(Value)
@@ -995,7 +995,7 @@ local DistanceToggle = Tab:CreateToggle({
 
 -- Slider para ajustar a distância de detecção
 local DistanceSlider = Tab:CreateSlider({
-   Name = "Distância de Detecção",
+   Name = "auto spam block distânce",
    Range = {1, 50},
    Increment = 1,
    Suffix = " studs",
@@ -1009,7 +1009,7 @@ local DistanceSlider = Tab:CreateSlider({
 
 -- Slider para multiplicador de spam
 local MultiplierSlider = Tab:CreateSlider({
-   Name = "Multiplicador de Spam",
+   Name = "spam multiplicator",
    Range = {1, 10},
    Increment = 1,
    Suffix = "x",
@@ -1034,7 +1034,7 @@ local TestButton = Tab:CreateButton({
    Name = "Teste Manual (True/False)",
    Callback = function()
        executeBlockCode(true)
-       wait(0.1)
+       wait(0.3)
        executeBlockCode(false)
        print("Teste executado: True -> False")
    end,
@@ -1047,5 +1047,77 @@ game.Players.LocalPlayer.AncestryChanged:Connect(function()
     end
     if detectionConnection then
         detectionConnection:Disconnect()
+    end
+end)
+
+-- Variável de controle do toggle
+local PunchEnabled = false 
+
+-- Toggle no Rayfield
+TabSp:CreateToggle({
+    Name = "Punch on Click",
+    CurrentValue = false,
+    Flag = "PunchOnClickToggle",
+    Callback = function(Value)
+        PunchEnabled = Value
+    end
+})
+
+--================ SCRIPT =================--
+
+local player = game.Players.LocalPlayer
+local character = player.Character or player.CharacterAdded:Wait()
+local localroot = character:WaitForChild("HumanoidRootPart")
+local UserInputService = game:GetService("UserInputService")
+
+-- Função para pegar o player mais próximo
+local function closest()
+    local range = 50
+    local target = nil
+    for _, v in pairs(game.Players:GetPlayers()) do
+        if v ~= player and v.Character and not v.Character:FindFirstChildWhichIsA("ForceField") then
+            local JN = v.Character:FindFirstChild("HumanoidRootPart")
+            local JNR = v.Character:FindFirstChildOfClass("Humanoid")
+            if JN and JNR and JNR.Health > 3 then
+                local dist = (localroot.Position - JN.Position).Magnitude
+                if dist < range then
+                    range = dist
+                    target = v.Character
+                end
+            end
+        end
+    end
+    return target
+end
+
+-- Atualiza variáveis quando renascer
+player.CharacterAdded:Connect(function(char)
+    character = char
+    localroot = character:WaitForChild("HumanoidRootPart")
+end)
+
+-- Função que executa o ataque 1 vez
+local function punchOnce()
+    if not PunchEnabled then return end
+    local target = closest()
+    if target and target:FindFirstChild("UpperTorso") then
+        local vroot = target:FindFirstChild("UpperTorso")
+        local args = {
+            [1] = 1,
+            [2] = target,
+            [3] = 50,
+            [4] = vroot
+        }
+        game:GetService("ReplicatedStorage").MainEvents.PUNCHEVENT:FireServer(unpack(args))
+    end
+end
+
+-- Detecta clique (mouse ou toque)
+UserInputService.InputBegan:Connect(function(input, gameProcessed)
+    if PunchEnabled and not gameProcessed then
+        if input.UserInputType == Enum.UserInputType.MouseButton1 
+        or input.UserInputType == Enum.UserInputType.Touch then
+            punchOnce()
+        end
     end
 end)
