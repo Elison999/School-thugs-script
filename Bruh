@@ -660,7 +660,7 @@ end)
 end
 
 -- Aba do Rayfield
-local Tab = Window:CreateTab("Detector", 4483362458)
+local Tab = Window:CreateTab("Combat👊", 4483362458)
 
 Tab:CreateToggle({
 Name = "Auto Anti-Hit (heath ≤ 15)",
