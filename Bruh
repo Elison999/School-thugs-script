@@ -888,3 +888,164 @@ local Toggle = Tabv2:CreateToggle({
         end
     end,
 })
+
+local Tab = Window:CreateTab("Spam Block", 4483362458)
+local Section = Tab:CreateSection("Configurações")
+
+-- Variáveis de controle
+local spamEnabled = false
+local distanceDetection = false
+local detectionDistance = 13
+local spamConnection
+local detectionConnection
+local spamMultiplier = 1
+
+-- Função para executar o código de block
+local function executeBlockCode(state)
+    local args = {
+        [1] = state
+    }
+    game:GetService("ReplicatedStorage").MainEvents.BLOCKEVENT:FireServer(unpack(args))
+end
+
+-- Função para detectar players próximos
+local function detectNearbyPlayers()
+    local player = game.Players.LocalPlayer
+    if not player.Character or not player.Character:FindFirstChild("HumanoidRootPart") then
+        return false
+    end
+    
+    local playerPosition = player.Character.HumanoidRootPart.Position
+    
+    for _, otherPlayer in pairs(game.Players:GetPlayers()) do
+        if otherPlayer ~= player and otherPlayer.Character and otherPlayer.Character:FindFirstChild("HumanoidRootPart") then
+            local distance = (otherPlayer.Character.HumanoidRootPart.Position - playerPosition).Magnitude
+            if distance <= detectionDistance then
+                return true
+            end
+        end
+    end
+    return false
+end
+
+-- Função principal de spam
+local function startSpamLoop()
+    if spamConnection then
+        spamConnection:Disconnect()
+    end
+    
+    spamConnection = game:GetService("RunService").Heartbeat:Connect(function()
+        if spamEnabled then
+            if distanceDetection then
+                if detectNearbyPlayers() then
+                    -- Multiplica o spam quando detecta players próximos
+                    for i = 5, spamMultiplier do
+                        executeBlockCode(true)
+                        wait(0.01) -- Pequeno delay entre execuções
+                        executeBlockCode(false)
+                        wait(0.01)
+                    end
+                end
+            else
+                -- Spam normal sem detecção
+                for i = 1, spamMultiplier do
+                    executeBlockCode(true)
+                    wait(0.01)
+                    executeBlockCode(false)
+                    wait(0.01)
+                end
+            end
+        end
+    end)
+end
+
+-- Toggle principal do spam
+local SpamToggle = Tab:CreateToggle({
+   Name = "Ativar Spam Block",
+   CurrentValue = false,
+   Flag = "SpamToggle",
+   Callback = function(Value)
+       spamEnabled = Value
+       if Value then
+           print("Spam Block ativado!")
+           startSpamLoop()
+       else
+           print("Spam Block desativado!")
+           if spamConnection then
+               spamConnection:Disconnect()
+           end
+       end
+   end,
+})
+
+-- Toggle do detector de distância
+local DistanceToggle = Tab:CreateToggle({
+   Name = "Detector de Distância (13 studs)",
+   CurrentValue = false,
+   Flag = "DistanceToggle",
+   Callback = function(Value)
+       distanceDetection = Value
+       if Value then
+           print("Detector de distância ativado! Distância: " .. detectionDistance)
+       else
+           print("Detector de distância desativado!")
+       end
+   end,
+})
+
+-- Slider para ajustar a distância de detecção
+local DistanceSlider = Tab:CreateSlider({
+   Name = "Distância de Detecção",
+   Range = {1, 50},
+   Increment = 1,
+   Suffix = " studs",
+   CurrentValue = 13,
+   Flag = "DistanceSlider",
+   Callback = function(Value)
+       detectionDistance = Value
+       print("Distância de detecção alterada para: " .. Value)
+   end,
+})
+
+-- Slider para multiplicador de spam
+local MultiplierSlider = Tab:CreateSlider({
+   Name = "Multiplicador de Spam",
+   Range = {1, 10},
+   Increment = 1,
+   Suffix = "x",
+   CurrentValue = 1,
+   Flag = "MultiplierSlider",
+   Callback = function(Value)
+       spamMultiplier = Value
+       print("Multiplicador de spam alterado para: " .. Value .. "x")
+   end,
+})
+
+-- Seção de informações
+local InfoSection = Tab:CreateSection("Informações")
+
+local InfoParagraph = Tab:CreateParagraph({
+   Title = "Como usar:",
+   Content = "1. Ative o 'Spam Block' para começar o spam\n2. Ative o 'Detector de Distância' para só fazer spam quando houver players próximos\n3. Ajuste a distância e multiplicador conforme necessário\n4. O sistema irá executar automaticamente os códigos true/false quando detectar players"
+})
+
+-- Botão para teste manual
+local TestButton = Tab:CreateButton({
+   Name = "Teste Manual (True/False)",
+   Callback = function()
+       executeBlockCode(true)
+       wait(0.1)
+       executeBlockCode(false)
+       print("Teste executado: True -> False")
+   end,
+})
+
+-- Limpeza quando o script for fechado
+game.Players.LocalPlayer.AncestryChanged:Connect(function()
+    if spamConnection then
+        spamConnection:Disconnect()
+    end
+    if detectionConnection then
+        detectionConnection:Disconnect()
+    end
+end)
