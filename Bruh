@@ -2,9 +2,9 @@
 local Rayfield = loadstring(game:HttpGet('https://sirius.menu/rayfield'))()
 
 local Window = Rayfield:CreateWindow({
-Name = "Player "school thugs - by darker",
+Name = "Player Detector Spam",
 LoadingTitle = "Loading...",
-LoadingSubtitle = "by darker9899",
+LoadingSubtitle = "by elison",
 ConfigurationSaving = {
 Enabled = true,
 FolderName = nil,
@@ -103,10 +103,10 @@ botaoFlutuante.MouseButton1Click:Connect(function()
 if not dragging then
 autoFollowAtivo = not autoFollowAtivo
 if autoFollowAtivo then
-botaoFlutuante.Text = "auto fight: ON"
+botaoFlutuante.Text = "Follow: ON"
 botaoFlutuante.BackgroundColor3 = Color3.fromRGB(85, 255, 85)
 else
-botaoFlutuante.Text = "auto fight: OFF"
+botaoFlutuante.Text = "Follow: OFF"
 botaoFlutuante.BackgroundColor3 = Color3.fromRGB(255, 85, 85)
 targetPlayer = nil
 end
@@ -663,7 +663,7 @@ end
 local Tab = Window:CreateTab("Detector", 4483362458)
 
 Tab:CreateToggle({
-Name = "Auto Anti-Hit (so you have life at 15)",
+Name = "Auto Anti-Hit (heath ≤ 15)",
 CurrentValue = false,
 Flag = "ToggleAutoAntiHit",
 Callback = function(Value)
@@ -718,7 +718,7 @@ end
 })
 
 Tab:CreateToggle({
-Name = "auto fight toggle",
+Name = "Show toggle auto fight",
 CurrentValue = false,
 Flag = "ToggleBotaoFollow",
 Callback = function(Value)
@@ -734,7 +734,7 @@ end
 })
 
 Tab:CreateToggle({
-Name = "Auto Teleport (if you have low health)",
+Name = "Auto Teleport (Low Life)",
 CurrentValue = false,
 Flag = "ToggleAutoTeleport",
 Callback = function(Value)
@@ -759,7 +759,7 @@ end
 })
 
 Tab:CreateSlider({
-Name = "auto hit detector",
+Name = "auto fight distance",
 Range = {5, 50},
 Increment = 1,
 Suffix = " studs",
@@ -771,7 +771,7 @@ end
 })
 
 Tab:CreateSlider({
-Name = "auto block speed",
+Name = "speed auto block",
 Range = {1, 9999999999999999999},
 Increment = 1,
 Suffix = "%",
@@ -783,7 +783,7 @@ end
 })
 
 Tab:CreateSlider({
-Name = "Distance Toggle Detector (Punch",
+Name = "Distance Toggle Detector (Punch)",
 Range = {5, 25},
 Increment = 1,
 Suffix = " studs",
