@@ -222,7 +222,7 @@ local argsTrue = {[1] = true}
 local argsFalse = {[1] = false}
 
 evento:FireServer(unpack(argsTrue))  
-task.wait(math.clamp((1 - (spamVelocidade / 9999999999999999999)) / 1, 0.001, 0.001)) -- delay entre códigos  
+task.wait(math.clamp((1 - (spamVelocidade / 9999999999999999999)) / 1, 0.1, 0.1)) -- delay entre códigos  
 evento:FireServer(unpack(argsFalse))
 
 end
@@ -284,7 +284,7 @@ if autoFollowAtivo and not targetPlayer then
 targetPlayer = otherPlayer
 end
 enviarSpam()
-task.wait(math.clamp((1 - (spamVelocidade / 9999999999999999999)), 0.001, 1))
+task.wait(math.clamp((1 - (spamVelocidade / 9999999999999999999)), 0.1, 1))
 end
 end
 end
