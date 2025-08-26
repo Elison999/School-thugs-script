@@ -875,7 +875,7 @@ end)
 
 -- Toggle Rayfield
 local Toggle = Tabv2:CreateToggle({
-    Name = "Anti Hit (vida = 15)",
+    Name = "Anti Hit (HP = 15)",
     CurrentValue = false,
     Flag = "AntiHitToggle",
     Callback = function(Value)
@@ -1027,19 +1027,8 @@ local MultiplierSlider = Tab:CreateSlider({
 local InfoSection = Tab:CreateSection("Informações")
 
 local InfoParagraph = Tab:CreateParagraph({
-   Title = "Como usar:",
-   Content = "1. Ative o 'Spam Block' para começar o spam\n2. Ative o 'Detector de Distância' para só fazer spam quando houver players próximos\n3. Ajuste a distância e multiplicador conforme necessário\n4. O sistema irá executar automaticamente os códigos true/false quando detectar players"
-})
-
--- Botão para teste manual
-local TestButton = Tab:CreateButton({
-   Name = "Teste Manual (True/False)",
-   Callback = function()
-       executeBlockCode(true)
-       wait(0.3)
-       executeBlockCode(false)
-       print("Teste executado: True -> False")
-   end,
+   Title = "how to use:",
+   Content = "1. Enable 'Spam Block' to start spamming\n2. Enable 'Distance Detector' to only spam when there are players nearby\n3. Adjust the distance and multiplier as needed\n4. The system...
 })
 
 -- Limpeza quando o script for fechado
@@ -1076,7 +1065,7 @@ local UserInputService = game:GetService("UserInputService")
 
 -- Função para pegar o player mais próximo
 local function closest()
-    local range = 50
+    local range = 25
     local target = nil
     for _, v in pairs(game.Players:GetPlayers()) do
         if v ~= player and v.Character and not v.Character:FindFirstChildWhichIsA("ForceField") then
