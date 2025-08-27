@@ -1028,7 +1028,7 @@ local InfoSection = Tab:CreateSection("Informações")
 
 local InfoParagraph = Tab:CreateParagraph({
    Title = "how to use:",
-   Content = "1. Enable 'Spam Block' to start spamming\n2. Enable 'Distance Detector' to only spam when there are players nearby\n3. Adjust the distance and multiplier as needed\n4. The system...
+   Content = "1. Enable 'Spam Block' to start spamming\n2. Enable 'Distance Detector' to only spam when there are players nearby\n3. Adjust the distance and multiplier as needed\n4. The system..."
 })
 
 -- Limpeza quando o script for fechado
